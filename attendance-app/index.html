@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Attendance</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{--bg:#f3f5fb;--card:#fff;--tx:#1b2033;--mu:#6b7390;--bd:#e2e6f1;--pr:#4f46e5;--ok:#16a34a;--no:#dc2626;--lt:#d97706;--sf:#eef0fa;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1120;--card:#171b2f;--tx:#eef0fb;--mu:#98a0c0;--bd:#262b45;--pr:#818cf8;--sf:#1e233b}}
+:root[data-theme="dark"]{--bg:#0e1120;--card:#171b2f;--tx:#eef0fb;--mu:#98a0c0;--bd:#262b45;--pr:#818cf8;--sf:#1e233b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font-size:22px;margin:0}h1 small{display:block;font-size:13px;color:var(--mu);font-weight:400}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px}
+.grid{display:grid;gap:14px;grid-template-columns:340px 1fr}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+input,select,textarea,button{font:inherit;color:inherit}
+input,textarea{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);margin-bottom:8px}
+input:focus,textarea:focus{outline:2px solid var(--pr)}
+label{font-size:12px;color:var(--mu)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+button{cursor:pointer;border:1px solid var(--bd);background:var(--sf);border-radius:10px;padding:9px 14px}
+button.pri{background:var(--pr);color:#fff;border-color:var(--pr);font-weight:600}
+button:hover{filter:brightness(1.07)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.st{border-radius:14px;padding:12px;background:var(--sf);border:1px solid var(--bd)}
+.st b{font-size:26px;display:block}.st span{color:var(--mu);font-size:12px}
+.dash{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.donut{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;flex:none}
+.donut div{width:84px;height:84px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center;font-size:12px;color:var(--mu)}
+.donut b{display:block;font-size:22px;color:var(--tx)}
+.legend{display:grid;gap:4px;font-size:13px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{padding:5px 12px;border-radius:99px;font-size:13px}
+.chip.on{background:var(--pr);color:#fff;border-color:var(--pr)}
+.stu{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.id{min-width:46px;height:38px;display:grid;place-items:center;border-radius:10px;background:var(--sf);font-weight:700}
+.id.ch{background:var(--pr);color:#fff}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btns{display:flex;gap:4px}
+.btns button{padding:6px 11px;font-weight:600;border-radius:8px}
+.btns .P.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+.btns .A.on{background:var(--no);color:#fff;border-color:var(--no)}
+.btns .L.on{background:var(--lt);color:#fff;border-color:var(--lt)}
+.x{padding:6px 9px;color:var(--mu)}
+.bar{height:8px;border-radius:9px;background:var(--sf);overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--ok)}
+.hist{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed var(--bd)}
+.empty{text-align:center;color:var(--mu);padding:26px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 18px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none;z-index:9}
+#toast.on{opacity:1}
+#modal{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:16px;z-index:10}
+details summary{cursor:pointer;color:var(--pr);font-size:13px;margin-bottom:8px}
+</style></head>
+<body><div class="wrap">
+<header><h1>📋 Smart Attendance<small id="today"></small></h1><button id="theme">🌓</button></header>
+
+<div class="grid">
+<div>
+ <div class="card"><h2>Class details</h2>
+  <label>Class / Section</label><input id="cls" placeholder="e.g. Class 10-A">
+  <label>Subject</label><input id="sub" placeholder="e.g. Mathematics">
+  <label>Date</label><input id="date" type="date">
+ </div>
+ <div class="card"><h2>Add student</h2>
+  <label>Roll number — type one (5), many (1,2,3) or a range (1-30)</label><input id="rl" inputmode="text" placeholder="Type roll no. (5, 12A…) and press Enter" autofocus>
+  <label>Name (optional)</label><input id="nm" placeholder="Leave empty if not needed">
+  <div class="row"><button class="pri" id="add">+ Add</button><button id="addL" title="For students with no roll number">+ Letter (A, B…)</button></div>
+  <div style="border-top:1px solid var(--bd);margin:14px 0 12px"></div>
+  <h2>Paste many roll numbers</h2>
+  <textarea id="bulk" rows="7" placeholder="Paste here, one entry per line:&#10;1-40&#10;12, Riya Sharma&#10;15 Aman&#10;7A, 8A, 9A"></textarea>
+  <small style="color:var(--mu);display:block;margin-bottom:8px">Name is optional. Each line can be a roll (<b>12</b>), a roll and name (<b>12, Riya</b>), a range (<b>1-40</b>) or several rolls (<b>5, 6, 7</b>). A line with only a name gets the next letter.</small>
+  <button id="bulkAdd" class="pri" style="width:100%">Add all pasted</button>
+ </div>
+ <div class="card"><h2>History</h2><div id="hist"></div></div>
+</div>
+
+<div>
+ <div class="card"><h2>Dashboard</h2>
+  <div class="dash">
+   <div class="donut" id="donut"><div><span><b id="pct">0%</b>present</span></div></div>
+   <div class="legend" id="legend"></div>
+   <div class="stats" style="flex:1;min-width:240px" id="stats"></div>
+  </div>
+  <div class="bar"><i id="prog" style="width:0"></i></div>
+  <small style="color:var(--mu)" id="progTxt"></small>
+ </div>
+ <div class="card">
+  <div class="row"><input id="q" placeholder="🔍 Search name or roll…" style="flex:2"><button id="allP">✓ All present</button><button id="reset">↺ Reset marks</button></div>
+  <div class="chips" id="chips"></div>
+  <div id="list"></div>
+  <div class="row" style="margin-top:12px"><button class="pri" id="pdf">⬇ Finish &amp; download PDF</button><button id="clear">🗑 Remove all students</button></div>
+ </div>
+</div></div></div>
+<div id="modal"><div class="card" style="max-width:340px;margin:0"><p id="mMsg" style="margin-top:0"></p><div class="row"><button id="mNo">Cancel</button><button class="pri" id="mOk">Yes</button></div></div></div>
+<div id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let S={students:[],hist:[],cls:'',sub:''},filter='all';
+const KEY='smart_attendance_v1';
+function load(){try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200)}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function letter(i){let s='';i++;while(i>0){const m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26)}return s}
+function nextLabel(){const u=new Set(S.students.map(s=>s.label).filter(Boolean));let i=0;while(u.has(letter(i)))i++;return letter(i)}
+const idOf=s=>s.roll||s.label;
+function cmp(a,b){const na=/^\d+$/.test(a.roll),nb=/^\d+$/.test(b.roll);
+ if(na&&nb)return (+a.roll-+b.roll)||a.name.localeCompare(b.name); if(na)return -1; if(nb)return 1;
+ return idOf(a).localeCompare(idOf(b),undefined,{numeric:true})}
+function addStudent(name,roll,auto){
+ name=(name||'').trim();roll=(roll||'').trim();if(!name&&!roll&&!auto)return false;
+ if(roll&&S.students.some(s=>s.roll===roll)){
+  if(!name){toast('Roll '+roll+' already exists — add a unique name to reuse it');return false}
+  if(S.students.some(s=>s.name.trim().toLowerCase()===name.toLowerCase())){toast('Name "'+name+'" already used — enter a different name');return false}
+ }
+ S.students.push({id:Date.now()+Math.random(),name,roll,label:roll?'':nextLabel(),st:''});return true}
+function counts(){const c={P:0,A:0,L:0,'':0};S.students.forEach(s=>c[s.st]++);return c}
+function render(){
+ const c=counts(),n=S.students.length,marked=n-c[''];
+ $('stats').innerHTML=[['Total',n,'var(--pr)'],['Present',c.P,'var(--ok)'],['Absent',c.A,'var(--no)'],['Late',c.L,'var(--lt)']].map(x=>`<div class="st"><b style="color:${x[2]}">${x[1]}</b><span>${x[0]}</span></div>`).join('');
+ const p=n?Math.round((c.P+c.L)/n*100):0;$('pct').textContent=p+'%';
+ const a=n?c.P/n*360:0,b=n?a+c.L/n*360:0,d=n?b+c.A/n*360:0;
+ $('donut').style.background=n?`conic-gradient(var(--ok) 0 ${a}deg,var(--lt) ${a}deg ${b}deg,var(--no) ${b}deg ${d}deg,var(--bd) ${d}deg 360deg)`:'var(--bd)';
+ $('legend').innerHTML=[['--ok','Present'],['--lt','Late'],['--no','Absent'],['--bd','Unmarked']].map(x=>`<div><span class="dot" style="background:var(${x[0]})"></span>${x[1]}</div>`).join('');
+ $('prog').style.width=(n?marked/n*100:0)+'%';$('progTxt').textContent=marked+' of '+n+' marked';
+ const fl=[['all','All'],['P','Present'],['A','Absent'],['L','Late'],['','Unmarked']];
+ $('chips').innerHTML=fl.map(f=>`<button class="chip ${filter===f[0]?'on':''}" data-f="${f[0]}">${f[1]}</button>`).join('');
+ const q=$('q').value.toLowerCase();
+ const rows=S.students.slice().sort(cmp).filter(s=>(filter==='all'||s.st===filter)&&(idOf(s)+' '+s.name).toLowerCase().includes(q));
+ $('list').innerHTML=rows.length?rows.map(s=>`<div class="stu"><div class="id ${s.roll?'':'ch'}">${esc(idOf(s))}</div><div class="nm">${s.name?esc(s.name):'<span style="color:var(--mu)">—</span>'}</div><div class="btns">${['P','A','L'].map(k=>`<button class="${k} ${s.st===k?'on':''}" data-m="${s.id}" data-k="${k}">${k}</button>`).join('')}</div><button class="x" data-d="${s.id}" title="Remove">✕</button></div>`).join(''):`<div class="empty">${n?'No students match.':'Add your first student to begin 👆'}</div>`;
+ $('hist').innerHTML=S.hist.length?S.hist.slice(-6).reverse().map(h=>`<div class="hist"><span>${esc(h.date)} · ${esc(h.cls||'Class')}</span><b>${h.p}P ${h.l}L ${h.a}A</b></div>`).join(''):'<small style="color:var(--mu)">Finished sessions appear here.</small>';
+ save()}
+function ask(msg,okTxt){return new Promise(res=>{const m=$('modal');$('mMsg').textContent=msg;$('mOk').textContent=okTxt||'Yes';m.style.display='flex';const done=v=>{m.style.display='none';res(v)};$('mOk').onclick=()=>done(true);$('mNo').onclick=()=>done(false)})}
+async function pdf(){
+ if(!S.students.length)return toast('Add students first');
+ const c=counts();
+ if(c['']&&!(await ask(c['']+' student(s) are not marked. Download anyway?','Download')))return;
+ if(!window.jspdf){window.print();return}
+ const {jsPDF}=window.jspdf,doc=new jsPDF(),W=doc.internal.pageSize.getWidth();
+ doc.setFillColor(79,70,229);doc.rect(0,0,W,28,'F');doc.setTextColor(255);doc.setFontSize(18);doc.text('Attendance Report',14,13);
+ doc.setFontSize(10);doc.text([S.cls||'Class',S.sub||''].filter(Boolean).join('  |  ')+'   Date: '+$('date').value,14,21);
+ doc.setTextColor(30);doc.setFontSize(11);
+ const n=S.students.length;
+ doc.text(`Total: ${n}    Present: ${c.P}    Late: ${c.L}    Absent: ${c.A}    Unmarked: ${c['']}    Attendance: ${Math.round((c.P+c.L)/n*100)}%`,14,37);
+ const name={P:'Present',A:'Absent',L:'Late','':'Not marked'};
+ const rows=S.students.slice().sort(cmp).map((s,i)=>[i+1,idOf(s),s.name||'-',name[s.st]]);
+ doc.autoTable({startY:43,head:[['#','Roll / ID','Name','Status']],body:rows,headStyles:{fillColor:[79,70,229]},styles:{fontSize:10},
+  didParseCell:d=>{if(d.section==='body'&&d.column.index===3){const v=d.cell.raw;d.cell.styles.textColor=v==='Present'?[22,163,74]:v==='Absent'?[220,38,38]:v==='Late'?[217,119,6]:[120,120,120];d.cell.styles.fontStyle='bold'}}});
+ const fn='attendance_'+($('cls').value||'class').replace(/\W+/g,'_')+'_'+$('date').value+'.pdf';
+ let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}
+ try{if(dl)await dl.save({filename:fn,data:doc.output('blob')});else doc.save(fn)}catch(e){if(!(e&&e.code==='declined'))toast('Could not save the PDF');return}
+ S.hist.push({date:$('date').value,cls:S.cls,p:c.P,l:c.L,a:c.A});render();toast('PDF saved ✓')}
+
+$('add').onclick=()=>{const r=$('rl').value.trim(),nm=$('nm').value;let k=0;
+ if(!r)return toast('Type a roll number');
+ const T=r.split(/[\s,]+/).filter(Boolean);
+ T.forEach(t=>{const m=t.match(/^(\d+)-(\d+)$/);
+  if(m&&+m[2]>=+m[1]&&+m[2]-+m[1]<300){for(let i=+m[1];i<=+m[2];i++)if(addStudent('',String(i)))k++}
+  else if(addStudent(T.length===1?nm:'',t))k++});
+ $('rl').value='';$('nm').value='';$('rl').focus();render();if(k>1)toast(k+' students added')};
+$('addL').onclick=()=>{addStudent($('nm').value,'',true);$('nm').value='';render()};
+$('nm').onkeydown=$('rl').onkeydown=e=>{if(e.key==='Enter')$('add').click()};
+$('bulkAdd').onclick=()=>{let k=0,sk=0;const R=/^(\d+-\d+|[A-Za-z0-9]*\d[A-Za-z0-9]*)$/;
+ const add=(nm,r)=>{const m=r.match(/^(\d+)-(\d+)$/);
+  if(m&&+m[2]>=+m[1]&&+m[2]-+m[1]<1000){for(let i=+m[1];i<=+m[2];i++){addStudent('',String(i))?k++:sk++}}
+  else{addStudent(nm,r)?k++:sk++}};
+ $('bulk').value.split(/\r?\n/).forEach(l=>{l=l.trim();if(!l)return;
+  const T=l.split(/[\s,;:\t]+/).filter(Boolean);
+  if(T.every(t=>R.test(t)))T.forEach(t=>add('',t));
+  else{const m=l.match(/^([^\s,;:\t]+)[\s,;:\t]+(.+)$/);
+   if(m&&R.test(m[1]))add(m[2].trim(),m[1]);else{addStudent(l,'',true)?k++:sk++}}});
+ $('bulk').value='';render();toast(k+' added'+(sk?', '+sk+' skipped (duplicate)':''))};
+$('list').onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.m){const s=S.students.find(x=>x.id==b.dataset.m);s.st=s.st===b.dataset.k?'':b.dataset.k;render()}
+ if(b.dataset.d&&await ask('Remove this student?','Remove')){S.students=S.students.filter(x=>x.id!=b.dataset.d);render()}};
+$('chips').onclick=e=>{const b=e.target.closest('button');if(b){filter=b.dataset.f;render()}};
+$('q').oninput=render;
+$('allP').onclick=()=>{S.students.forEach(s=>s.st='P');render()};
+$('reset').onclick=()=>{S.students.forEach(s=>s.st='');render();toast('Marks reset')};
+$('clear').onclick=async()=>{if(await ask('Remove ALL students?','Remove all')){S.students=[];render()}};
+$('pdf').onclick=pdf;
+$('cls').oninput=()=>{S.cls=$('cls').value;save()};$('sub').oninput=()=>{S.sub=$('sub').value;save()};
+$('theme').onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()==='#0e1120';r.dataset.theme=d?'light':'dark'};
+load();$('cls').value=S.cls||'';$('sub').value=S.sub||'';
+$('date').value=new Date().toISOString().slice(0,10);
+$('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+render();
+</script></body></html>
